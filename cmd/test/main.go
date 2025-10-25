@@ -7,9 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/morgansundqvist/reason/internal/adapters"
-	"github.com/morgansundqvist/reason/internal/application"
-	"github.com/morgansundqvist/reason/internal/domain"
+	"github.com/morgansundqvist/reason"
 )
 
 func main() {
@@ -19,44 +17,38 @@ func main() {
 		log.Fatal("OPENAI_API_KEY environment variable is not set")
 	}
 
-	// Initialize OpenAI service
-	svc := adapters.NewOpenAIService(&adapters.OpenAIConfig{
-		APIKey: apiKey,
-		Model:  "gpt-5",
-	})
-
-	// Initialize application service
-	reasoner := application.NewReasoner(svc)
+	// Initialize client using public API
+	client := reason.NewClient(apiKey, reason.WithModel("gpt-5"))
 
 	ctx := context.Background()
 
 	// Test 1: Simple Question
 	fmt.Println("=== Test 1: Simple Question ===")
-	testSimpleQuestion(ctx, reasoner)
+	testSimpleQuestion(ctx, client)
 
 	// Test 2: Question with Tools
 	fmt.Println("\n=== Test 2: Question with Tools ===")
-	testQuestionWithTools(ctx, reasoner)
+	testQuestionWithTools(ctx, client)
 
 	// Test 3: Typed Question (Structured Output)
 	fmt.Println("\n=== Test 3: Typed Question (Structured Output) ===")
-	testTypedQuestion(ctx, reasoner)
+	testTypedQuestion(ctx, client)
 
 	// Test 4: Conversation
 	fmt.Println("\n=== Test 4: Multi-turn Conversation ===")
-	testConversation(ctx, svc)
+	testConversation(ctx, client)
 
 	// Test 5: Tool Calling Loop
 	fmt.Println("\n=== Test 5: Tool Calling Loop ===")
-	testToolCallingLoop(ctx, reasoner)
+	testToolCallingLoop(ctx, client)
 
 	fmt.Println("\n✅ All tests completed successfully!")
 }
 
-func testSimpleQuestion(ctx context.Context, reasoner *application.Reasoner) {
+func testSimpleQuestion(ctx context.Context, client *reason.Client) {
 	question := "What is the capital of France?"
 
-	resp, err := reasoner.SimpleQuery(ctx, question, domain.WithTemperature(0.7))
+	resp, err := client.SimpleQuery(ctx, question, reason.WithTemperature(0.7))
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return
@@ -67,30 +59,30 @@ func testSimpleQuestion(ctx context.Context, reasoner *application.Reasoner) {
 	fmt.Printf("Tokens - Input: %d, Output: %d\n", resp.Usage.InputTokens, resp.Usage.OutputTokens)
 }
 
-func testQuestionWithTools(ctx context.Context, reasoner *application.Reasoner) {
+func testQuestionWithTools(ctx context.Context, client *reason.Client) {
 	question := "What is 25 + 17?"
 
-	tools := []domain.Tool{
+	tools := []reason.Tool{
 		{
 			Name:        "calculator",
 			Description: "Performs basic arithmetic operations",
-			Parameters: []domain.Parameter{
+			Parameters: []reason.Parameter{
 				{
 					Name:        "operation",
-					Type:        domain.TypeString,
+					Type:        reason.TypeString,
 					Description: "The operation to perform (add, subtract, multiply, divide)",
 					Required:    true,
 					Enum:        []string{"add", "subtract", "multiply", "divide"},
 				},
 				{
 					Name:        "a",
-					Type:        domain.TypeNumber,
+					Type:        reason.TypeNumber,
 					Description: "First number",
 					Required:    true,
 				},
 				{
 					Name:        "b",
-					Type:        domain.TypeNumber,
+					Type:        reason.TypeNumber,
 					Description: "Second number",
 					Required:    true,
 				},
@@ -98,7 +90,7 @@ func testQuestionWithTools(ctx context.Context, reasoner *application.Reasoner) 
 		},
 	}
 
-	resp, err := reasoner.QueryWithTools(ctx, question, tools, domain.WithTemperature(0.3))
+	resp, err := client.QueryWithTools(ctx, question, tools, reason.WithTemperature(0.3))
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return
@@ -118,7 +110,7 @@ func testQuestionWithTools(ctx context.Context, reasoner *application.Reasoner) 
 	fmt.Printf("Tokens - Input: %d, Output: %d\n", resp.Usage.InputTokens, resp.Usage.OutputTokens)
 }
 
-func testTypedQuestion(ctx context.Context, reasoner *application.Reasoner) {
+func testTypedQuestion(ctx context.Context, client *reason.Client) {
 	question := "Extract information about Paris: name, population, and country"
 
 	schema := map[string]interface{}{
@@ -141,7 +133,7 @@ func testTypedQuestion(ctx context.Context, reasoner *application.Reasoner) {
 		"additionalProperties": false,
 	}
 
-	resp, err := reasoner.StructuredQuery(ctx, question, schema, domain.WithStrictJSON(true))
+	resp, err := client.StructuredQuery(ctx, question, schema, reason.WithStrictJSON(true))
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return
@@ -162,18 +154,18 @@ func testTypedQuestion(ctx context.Context, reasoner *application.Reasoner) {
 	fmt.Printf("Tokens - Input: %d, Output: %d\n", resp.Usage.InputTokens, resp.Usage.OutputTokens)
 }
 
-func testConversation(ctx context.Context, svc *adapters.OpenAIService) {
+func testConversation(ctx context.Context, client *reason.Client) {
 	fmt.Println("Starting multi-turn conversation...")
 
 	// Initial message
-	messages := []domain.Message{
+	messages := []reason.Message{
 		{
 			Role:    "user",
 			Content: "What is the largest planet in our solar system?",
 		},
 	}
 
-	resp, err := svc.Chat(ctx, messages, domain.WithTemperature(0.5))
+	resp, err := client.Chat(ctx, messages, reason.WithTemperature(0.5))
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return
@@ -183,17 +175,17 @@ func testConversation(ctx context.Context, svc *adapters.OpenAIService) {
 	fmt.Printf("Assistant: %s\n", resp.Content)
 
 	// Continue the conversation
-	messages = append(messages, domain.Message{
+	messages = append(messages, reason.Message{
 		Role:    "assistant",
 		Content: resp.Content,
 	})
 
-	messages = append(messages, domain.Message{
+	messages = append(messages, reason.Message{
 		Role:    "user",
 		Content: "How far is it from Earth?",
 	})
 
-	resp2, err := svc.Chat(ctx, messages, domain.WithTemperature(0.5))
+	resp2, err := client.Chat(ctx, messages, reason.WithTemperature(0.5))
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return
@@ -204,7 +196,7 @@ func testConversation(ctx context.Context, svc *adapters.OpenAIService) {
 	fmt.Printf("Total Tokens Used - Input: %d, Output: %d\n", resp2.Usage.InputTokens, resp2.Usage.OutputTokens)
 }
 
-func testToolCallingLoop(ctx context.Context, reasoner *application.Reasoner) {
+func testToolCallingLoop(ctx context.Context, client *reason.Client) {
 	question := "Calculate: first add 15 and 23, then multiply the result by 2"
 
 	// Define a simple calculator executor
@@ -249,27 +241,27 @@ func testToolCallingLoop(ctx context.Context, reasoner *application.Reasoner) {
 	}
 
 	// Define calculator tool
-	tools := []domain.Tool{
+	tools := []reason.Tool{
 		{
 			Name:        "calculator",
 			Description: "Performs basic arithmetic operations",
-			Parameters: []domain.Parameter{
+			Parameters: []reason.Parameter{
 				{
 					Name:        "operation",
-					Type:        domain.TypeString,
+					Type:        reason.TypeString,
 					Description: "The operation to perform (add, subtract, multiply, divide)",
 					Required:    true,
 					Enum:        []string{"add", "subtract", "multiply", "divide"},
 				},
 				{
 					Name:        "a",
-					Type:        domain.TypeNumber,
+					Type:        reason.TypeNumber,
 					Description: "First number",
 					Required:    true,
 				},
 				{
 					Name:        "b",
-					Type:        domain.TypeNumber,
+					Type:        reason.TypeNumber,
 					Description: "Second number",
 					Required:    true,
 				},
@@ -277,7 +269,7 @@ func testToolCallingLoop(ctx context.Context, reasoner *application.Reasoner) {
 		},
 	}
 
-	resp, err := reasoner.QueryWithToolLoop(ctx, question, tools, calculatorExecutor, domain.WithTemperature(0.3))
+	resp, err := client.QueryWithToolLoop(ctx, question, tools, calculatorExecutor, reason.WithTemperature(0.3))
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return

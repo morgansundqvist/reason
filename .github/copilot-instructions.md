@@ -77,7 +77,18 @@ Helper methods centralize conversions and reduce duplication.
 
 The `Reasoner` is a thin wrapper that delegates all calls to the injected `LLMService`. No logic here—just forwarding with convenient method names.
 
-## Developer Workflows
+## Using `reason` as a Package
+
+The public API is exposed via the root `reason` package. External packages should import:
+
+```go
+import "github.com/morgansundqvist/reason"
+
+client := reason.NewClient(apiKey)
+resp, err := client.SimpleQuery(ctx, "question")
+```
+
+**Never import from [`internal/`](internal ) packages** — they are private to the module. The `reason.go` file re-exports all necessary types and creates the `Client` type for clean public API access.
 
 ### Setup
 

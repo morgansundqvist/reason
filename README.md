@@ -20,7 +20,7 @@ A hexagonal architecture Go framework for building LLM interactions with OpenAI'
 ### Installation
 
 ```bash
-go get your-gitea-server/your-username/reason
+go get github.com/morgansundqvist/reason
 ```
 
 ### Basic Usage
@@ -33,28 +33,20 @@ import (
 	"log"
 	"os"
 
-	"reason/internal/adapters"
-	"reason/internal/application"
-	"reason/internal/domain"
+	"github.com/morgansundqvist/reason"
 )
 
 func main() {
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	
-	// Initialize service
-	svc := adapters.NewOpenAIService(&adapters.OpenAIConfig{
-		APIKey: apiKey,
-		Model:  "gpt-4",
-	})
-	reasoner := application.NewReasoner(svc)
+	// Create a client
+	client := reason.NewClient(os.Getenv("OPENAI_API_KEY"))
 	ctx := context.Background()
 
 	// Simple question
-	resp, err := reasoner.SimpleQuery(ctx, "What is the capital of France?")
+	resp, err := client.SimpleQuery(ctx, "What is the capital of France?")
 	if err != nil {
 		log.Fatal(err)
 	}
-	println(resp.Content)
+	println(resp.Content) // Output: The capital of France is Paris.
 }
 ```
 
@@ -75,62 +67,63 @@ application/     → Use case orchestration (Reasoner delegates to LLM service)
 - `QueryWithTools(ctx, question, tools)` — Question with tool availability
 - `StructuredQuery(ctx, question, jsonSchema)` — Typed JSON response
 - `StructuredQueryWithTools(ctx, question, tools, jsonSchema)` — Typed response with tools
+## API Methods
 
-### Multi-Turn Operations
+All methods are available on the `reason.Client` type created via `reason.NewClient(apiKey)`.
 
-- `Chat(ctx, messages)` — Conversation management
-- `ChatWithTools(ctx, messages, tools)` — Conversation with tool support
+### Single-Turn Operations
 
-### Tool-Calling Loops (Automatic)
-
-- `QueryWithToolLoop(ctx, question, tools, executor)` — Auto-execute tools until complete
-- `ChatWithToolLoop(ctx, messages, tools, executor)` — Continue conversation with auto tool execution
+- `SimpleQuery(ctx, question)` — Direct question without tools
+- `QueryWithTools(ctx, question, tools)` — Question with tool availability
+- `StructuredQuery(ctx, question, jsonSchema)` — Typed JSON response
+- `StructuredQueryWithTools(ctx, question, tools, jsonSchema)` — Typed response with tools
 
 ## Configuration Options
 
 ```go
-domain.WithModel("gpt-4")              // Override model
-domain.WithTemperature(0.7)            // Randomness (0.0-1.0)
-domain.WithMaxTokens(2000)             // Output limit
-domain.WithSystemPrompt("Be helpful")  // Custom system prompt
-domain.WithStrictJSON(true)            // Enforce JSON format
-```
-
+client := reason.NewClient(apiKey,
+	reason.WithModel("gpt-4"),           // Override default model
+	reason.WithTemperature(0.7),         // Randomness (0.0-1.0)
+	reason.WithMaxTokens(2000),          // Output limit
+	reason.WithSystemPrompt("Be helpful"), // Custom system prompt
+	reason.WithStrictJSON(true),         // Enforce JSON format
+)
 ## Tool Definition Example
 
 ```go
-tools := []domain.Tool{
+tools := []reason.Tool{
 	{
 		Name:        "calculator",
 		Description: "Performs basic arithmetic",
-		Parameters: []domain.Parameter{
+		Parameters: []reason.Parameter{
 			{
 				Name:        "operation",
-				Type:        domain.TypeString,
+				Type:        reason.TypeString,
 				Description: "add, subtract, multiply, divide",
 				Required:    true,
 				Enum:        []string{"add", "subtract", "multiply", "divide"},
 			},
 			{
 				Name:        "a",
-				Type:        domain.TypeNumber,
+				Type:        reason.TypeNumber,
 				Description: "First number",
 				Required:    true,
 			},
 			{
 				Name:        "b",
-				Type:        domain.TypeNumber,
+				Type:        reason.TypeNumber,
 				Description: "Second number",
 				Required:    true,
 			},
 		},
 	},
 }
-```
 
+// Single tool call
 ## Tool Executor Pattern
 
 ```go
+// Define a tool executor - called for each tool the LLM invokes
 executor := func(toolName string, args map[string]interface{}) (string, error) {
 	if toolName != "calculator" {
 		return "", fmt.Errorf("unknown tool: %s", toolName)
@@ -148,6 +141,18 @@ executor := func(toolName string, args map[string]interface{}) (string, error) {
 		result = a * b
 	// ... handle other operations
 	}
+	
+	return fmt.Sprintf("Result: %v", result), nil
+}
+
+// Use in tool loop - automatically calls executor for each tool invocation
+resp, err := client.QueryWithToolLoop(ctx, 
+	"Add 15+23, then multiply by 2",
+	tools,
+	executor,
+	reason.WithTemperature(0.3),
+)
+```
 	
 	return fmt.Sprintf("Result: %v", result), nil
 }
