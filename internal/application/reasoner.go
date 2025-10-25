@@ -3,8 +3,8 @@ package application
 import (
 	"context"
 
-	"reason/internal/domain"
-	"reason/internal/ports"
+	"github.com/morgansundqvist/reason/internal/domain"
+	"github.com/morgansundqvist/reason/internal/ports"
 )
 
 // Reasoner encapsulates LLM reasoning workflows

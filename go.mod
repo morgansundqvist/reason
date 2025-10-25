@@ -1,4 +1,4 @@
-module reason
+module github.com/morgansundqvist/reason
 
 go 1.25.1
 

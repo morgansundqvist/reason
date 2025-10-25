@@ -4,11 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/morgansundqvist/reason/internal/domain"
+	"github.com/morgansundqvist/reason/internal/ports"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
-
-	"reason/internal/domain"
-	"reason/internal/ports"
 )
 
 // OpenAIService implements the ports.LLMService interface using OpenAI's API

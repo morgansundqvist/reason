@@ -2,7 +2,8 @@ package ports
 
 import (
 	"context"
-	"reason/internal/domain"
+
+	"github.com/morgansundqvist/reason/internal/domain"
 )
 
 // LLMService defines the contract for LLM interactions

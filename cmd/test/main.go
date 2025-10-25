@@ -7,9 +7,9 @@ import (
 	"log"
 	"os"
 
-	"reason/internal/adapters"
-	"reason/internal/application"
-	"reason/internal/domain"
+	"github.com/morgansundqvist/reason/internal/adapters"
+	"github.com/morgansundqvist/reason/internal/application"
+	"github.com/morgansundqvist/reason/internal/domain"
 )
 
 func main() {
