@@ -27,6 +27,7 @@ import (
 	"github.com/morgansundqvist/reason/internal/adapters"
 	"github.com/morgansundqvist/reason/internal/application"
 	"github.com/morgansundqvist/reason/internal/domain"
+	"github.com/morgansundqvist/reason/internal/ports"
 )
 
 // Re-export domain types for public use
@@ -72,11 +73,11 @@ var (
 	WithRateLimitKey = domain.WithRateLimitKey
 )
 
-// Client wraps the OpenAI service and Reasoner for public use.
+// Client wraps an LLM service and Reasoner for public use.
 // It provides a unified interface for all LLM operations.
 type Client struct {
 	reasoner *application.Reasoner
-	service  *adapters.OpenAIService
+	service  ports.LLMService
 }
 
 // NewClient creates a new reason client with the given OpenAI API key.
@@ -98,6 +99,30 @@ func NewClient(apiKey string, opts ...Option) *Client {
 		reasoner: application.NewReasoner(svc),
 		service:  svc,
 	}
+}
+
+// NewOllamaClient creates a new reason client backed by Ollama's chat API.
+// By default, it uses the "qwen3.5:4b" model; override with WithModel() option.
+func NewOllamaClient(baseURL string, opts ...Option) (*Client, error) {
+	cfg := &CallConfig{
+		Model: "qwen3.5:4b",
+	}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	svc, err := adapters.NewOllamaService(&adapters.OllamaConfig{
+		BaseURL: baseURL,
+		Model:   cfg.Model,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &Client{
+		reasoner: application.NewReasoner(svc),
+		service:  svc,
+	}, nil
 }
 
 // SimpleQuery asks a straightforward question without tools.

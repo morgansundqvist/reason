@@ -42,6 +42,37 @@ func main() {
 	fmt.Println("\n=== Test 5: Tool Calling Loop ===")
 	testToolCallingLoop(ctx, client)
 
+	// ── Ollama Tests ──────────────────────────────────────────────────────────
+	ollamaURL := os.Getenv("OLLAMA_BASE_URL")
+	if ollamaURL == "" {
+		ollamaURL = "http://localhost:11434"
+	}
+
+	ollamaOpts := []reason.Option{}
+	if m := os.Getenv("OLLAMA_MODEL"); m != "" {
+		ollamaOpts = append(ollamaOpts, reason.WithModel(m))
+	}
+
+	ollamaClient, err := reason.NewOllamaClient(ollamaURL, ollamaOpts...)
+	if err != nil {
+		fmt.Printf("\n⚠️  Skipping Ollama tests: %v\n", err)
+	} else {
+		fmt.Println("\n=== Ollama Test 1: Simple Question ===")
+		testSimpleQuestion(ctx, ollamaClient)
+
+		fmt.Println("\n=== Ollama Test 2: Question with Tools ===")
+		testQuestionWithTools(ctx, ollamaClient)
+
+		fmt.Println("\n=== Ollama Test 3: Typed Question (Structured Output) ===")
+		testTypedQuestion(ctx, ollamaClient)
+
+		fmt.Println("\n=== Ollama Test 4: Multi-turn Conversation ===")
+		testConversation(ctx, ollamaClient)
+
+		fmt.Println("\n=== Ollama Test 5: Tool Calling Loop ===")
+		testToolCallingLoop(ctx, ollamaClient)
+	}
+
 	fmt.Println("\n✅ All tests completed successfully!")
 }
 
@@ -133,7 +164,12 @@ func testTypedQuestion(ctx context.Context, client *reason.Client) {
 		"additionalProperties": false,
 	}
 
-	resp, err := client.StructuredQuery(ctx, question, schema, reason.WithStrictJSON(true))
+	resp, err := client.StructuredQuery(
+		ctx,
+		question,
+		schema,
+		reason.WithStrictJSON(true),
+	)
 	if err != nil {
 		log.Printf("Error: %v\n", err)
 		return

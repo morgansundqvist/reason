@@ -4,9 +4,9 @@ package domain
 
 // Message represents a single message in a conversation
 type Message struct {
-	Role       string       // "user", "assistant", "system"
-	Content    string
-	ToolCalls  []ToolCall   // Tool calls made by assistant (only for assistant messages)
+	Role      string // "user", "assistant", "system"
+	Content   string
+	ToolCalls []ToolCall // Tool calls made by assistant (only for assistant messages)
 }
 
 // ParameterType defines the JSON schema type of a tool parameter
@@ -69,7 +69,7 @@ type ToolResult struct {
 // AssistantResponse wraps the full assistant response needed for tool looping
 // It tracks both the content/tool calls AND the raw message structure for API continuations
 type AssistantResponse struct {
-	Response *Response           // The domain response
+	Response *Response              // The domain response
 	RawJSON  map[string]interface{} // Raw choice message JSON from API for continuation
 }
 
