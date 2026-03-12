@@ -81,6 +81,65 @@ func main() {
 }
 ```
 
+### Gemini Usage
+
+```go
+package main
+
+import (
+	"context"
+	"log"
+	"os"
+
+	"github.com/morgansundqvist/reason"
+)
+
+func main() {
+	ctx := context.Background()
+
+	client, err := reason.NewGeminiClient(ctx, os.Getenv("GEMINI_API_KEY"),
+		reason.WithModel("gemini-2.0-flash"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resp, err := client.SimpleQuery(ctx, "What is the capital of France?")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	println(resp.Content)
+}
+```
+
+#### Gemini Tool-Calling Loop
+
+```go
+executor := func(toolName string, args map[string]interface{}) (string, error) {
+	if toolName != "calculator" {
+		return "", fmt.Errorf("unknown tool: %s", toolName)
+	}
+	operation := args["operation"].(string)
+	a := args["a"].(float64)
+	b := args["b"].(float64)
+	switch operation {
+	case "add":
+		return fmt.Sprintf("Result: %v", a+b), nil
+	case "multiply":
+		return fmt.Sprintf("Result: %v", a*b), nil
+	}
+	return "", fmt.Errorf("unknown operation: %s", operation)
+}
+
+resp, err := client.QueryWithToolLoop(ctx,
+	"Add 15 and 23, then multiply the result by 2",
+	tools,
+	executor,
+	reason.WithTemperature(0.3),
+)
+```
+
 ## Architecture
 
 ```
@@ -201,6 +260,8 @@ resp, err := reasoner.QueryWithToolLoop(ctx, question, tools, executor)
 export OPENAI_API_KEY="sk-..."
 export OLLAMA_BASE_URL="http://localhost:11434"
 export OLLAMA_MODEL="qwen3.5:4b" # optional if using the adapter default
+export GEMINI_API_KEY="..."
+export GEMINI_MODEL="gemini-2.0-flash" # optional if using the adapter default
 go run cmd/test/main.go
 ```
 

@@ -101,6 +101,30 @@ func NewClient(apiKey string, opts ...Option) *Client {
 	}
 }
 
+// NewGeminiClient creates a new reason client backed by Google's Gemini API.
+// By default, it uses the "gemini-2.0-flash" model; override with WithModel() option.
+func NewGeminiClient(ctx context.Context, apiKey string, opts ...Option) (*Client, error) {
+	cfg := &CallConfig{
+		Model: "gemini-3.1-flash-lite-preview",
+	}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	svc, err := adapters.NewGeminiService(ctx, &adapters.GeminiConfig{
+		APIKey: apiKey,
+		Model:  cfg.Model,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &Client{
+		reasoner: application.NewReasoner(svc),
+		service:  svc,
+	}, nil
+}
+
 // NewOllamaClient creates a new reason client backed by Ollama's chat API.
 // By default, it uses the "qwen3.5:4b" model; override with WithModel() option.
 func NewOllamaClient(baseURL string, opts ...Option) (*Client, error) {

@@ -73,6 +73,37 @@ func main() {
 		testToolCallingLoop(ctx, ollamaClient)
 	}
 
+	// ── Gemini Tests ─────────────────────────────────────────────────────────
+	geminiAPIKey := os.Getenv("GEMINI_API_KEY")
+	if geminiAPIKey == "" {
+		fmt.Println("\n⚠️  Skipping Gemini tests: GEMINI_API_KEY not set")
+	} else {
+		geminiOpts := []reason.Option{}
+		if m := os.Getenv("GEMINI_MODEL"); m != "" {
+			geminiOpts = append(geminiOpts, reason.WithModel(m))
+		}
+
+		geminiClient, err := reason.NewGeminiClient(ctx, geminiAPIKey, geminiOpts...)
+		if err != nil {
+			fmt.Printf("\n⚠️  Skipping Gemini tests: %v\n", err)
+		} else {
+			fmt.Println("\n=== Gemini Test 1: Simple Question ===")
+			testSimpleQuestion(ctx, geminiClient)
+
+			fmt.Println("\n=== Gemini Test 2: Question with Tools ===")
+			testQuestionWithTools(ctx, geminiClient)
+
+			fmt.Println("\n=== Gemini Test 3: Typed Question (Structured Output) ===")
+			testTypedQuestion(ctx, geminiClient)
+
+			fmt.Println("\n=== Gemini Test 4: Multi-turn Conversation ===")
+			testConversation(ctx, geminiClient)
+
+			fmt.Println("\n=== Gemini Test 5: Tool Calling Loop ===")
+			testToolCallingLoop(ctx, geminiClient)
+		}
+	}
+
 	fmt.Println("\n✅ All tests completed successfully!")
 }
 
