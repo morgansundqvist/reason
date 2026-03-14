@@ -91,6 +91,7 @@ type CallConfig struct {
 	StrictJSON   bool    // Enforce JSON output format
 	Effort       Effort  // Request intensity level
 	RateLimitKey string  // For rate limiting
+	Think        bool    // Enable extended thinking (Ollama only)
 }
 
 // Effort defines request intensity levels
@@ -129,4 +130,8 @@ func WithEffort(effort Effort) Option {
 
 func WithRateLimitKey(key string) Option {
 	return func(cfg *CallConfig) { cfg.RateLimitKey = key }
+}
+
+func WithThink(think bool) Option {
+	return func(cfg *CallConfig) { cfg.Think = think }
 }

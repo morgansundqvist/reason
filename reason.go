@@ -71,6 +71,7 @@ var (
 	WithStrictJSON   = domain.WithStrictJSON
 	WithEffort       = domain.WithEffort
 	WithRateLimitKey = domain.WithRateLimitKey
+	WithThink        = domain.WithThink
 )
 
 // Client wraps an LLM service and Reasoner for public use.

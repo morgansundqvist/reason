@@ -281,7 +281,7 @@ func (s *OllamaService) buildChatRequest(messages []ollamaMessage, tools []ollam
 	req := &ollamaChatRequest{
 		Model:    cfg.Model,
 		Messages: messages,
-		Think:    false,
+		Think:    cfg.Think,
 		Stream:   false,
 	}
 
