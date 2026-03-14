@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 // ========== Core Domain Models ==========
 
 // Message represents a single message in a conversation
@@ -84,14 +86,15 @@ type Option func(*CallConfig)
 
 // CallConfig holds configuration for API calls
 type CallConfig struct {
-	Model        string  // Model name (e.g., "gpt-4", "claude-opus")
-	Temperature  float64 // 0.0-1.0, controls randomness
-	MaxTokens    int     // Maximum output tokens
-	SystemPrompt string  // Custom system prompt override
-	StrictJSON   bool    // Enforce JSON output format
-	Effort       Effort  // Request intensity level
-	RateLimitKey string  // For rate limiting
-	Think        bool    // Enable extended thinking (Ollama only)
+	Model        string        // Model name (e.g., "gpt-4", "claude-opus")
+	Temperature  float64       // 0.0-1.0, controls randomness
+	MaxTokens    int           // Maximum output tokens
+	SystemPrompt string        // Custom system prompt override
+	StrictJSON   bool          // Enforce JSON output format
+	Effort       Effort        // Request intensity level
+	RateLimitKey string        // For rate limiting
+	Think        bool          // Enable extended thinking (Ollama only)
+	Timeout      time.Duration // HTTP client timeout (Ollama only; 0 = use default 2 minutes)
 }
 
 // Effort defines request intensity levels
@@ -134,4 +137,8 @@ func WithRateLimitKey(key string) Option {
 
 func WithThink(think bool) Option {
 	return func(cfg *CallConfig) { cfg.Think = think }
+}
+
+func WithTimeout(d time.Duration) Option {
+	return func(cfg *CallConfig) { cfg.Timeout = d }
 }

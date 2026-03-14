@@ -29,6 +29,7 @@ type OllamaConfig struct {
 	BaseURL    string
 	Model      string
 	HTTPClient *http.Client
+	Timeout    time.Duration // HTTP client timeout; 0 uses the default (2 minutes)
 }
 
 type ollamaChatRequest struct {
@@ -113,7 +114,11 @@ func NewOllamaService(cfg *OllamaConfig) (*OllamaService, error) {
 
 	client := cfg.HTTPClient
 	if client == nil {
-		client = &http.Client{Timeout: 2 * time.Minute}
+		timeout := cfg.Timeout
+		if timeout == 0 {
+			timeout = 2 * time.Minute
+		}
+		client = &http.Client{Timeout: timeout}
 	}
 
 	return &OllamaService{

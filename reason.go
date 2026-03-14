@@ -72,6 +72,7 @@ var (
 	WithEffort       = domain.WithEffort
 	WithRateLimitKey = domain.WithRateLimitKey
 	WithThink        = domain.WithThink
+	WithTimeout      = domain.WithTimeout
 )
 
 // Client wraps an LLM service and Reasoner for public use.
@@ -139,6 +140,7 @@ func NewOllamaClient(baseURL string, opts ...Option) (*Client, error) {
 	svc, err := adapters.NewOllamaService(&adapters.OllamaConfig{
 		BaseURL: baseURL,
 		Model:   cfg.Model,
+		Timeout: cfg.Timeout,
 	})
 	if err != nil {
 		return nil, err
