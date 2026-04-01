@@ -95,6 +95,7 @@ type CallConfig struct {
 	RateLimitKey string        // For rate limiting
 	Think        bool          // Enable extended thinking (Ollama only)
 	Timeout      time.Duration // HTTP client timeout (Ollama only; 0 = use default 2 minutes)
+	KeepAlive    *int          // Ollama keep_alive seconds: nil=default, 0=unload, -1=forever, N=seconds
 }
 
 // Effort defines request intensity levels
@@ -141,4 +142,8 @@ func WithThink(think bool) Option {
 
 func WithTimeout(d time.Duration) Option {
 	return func(cfg *CallConfig) { cfg.Timeout = d }
+}
+
+func WithKeepAlive(seconds int) Option {
+	return func(cfg *CallConfig) { cfg.KeepAlive = &seconds }
 }

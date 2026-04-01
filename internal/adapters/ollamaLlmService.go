@@ -33,13 +33,14 @@ type OllamaConfig struct {
 }
 
 type ollamaChatRequest struct {
-	Model    string                 `json:"model"`
-	Messages []ollamaMessage        `json:"messages"`
-	Tools    []ollamaTool           `json:"tools,omitempty"`
-	Format   interface{}            `json:"format,omitempty"`
-	Options  map[string]interface{} `json:"options,omitempty"`
-	Think    interface{}            `json:"think,omitempty"`
-	Stream   bool                   `json:"stream"`
+	Model     string                 `json:"model"`
+	Messages  []ollamaMessage        `json:"messages"`
+	Tools     []ollamaTool           `json:"tools,omitempty"`
+	Format    interface{}            `json:"format,omitempty"`
+	Options   map[string]interface{} `json:"options,omitempty"`
+	Think     interface{}            `json:"think,omitempty"`
+	KeepAlive interface{}            `json:"keep_alive,omitempty"`
+	Stream    bool                   `json:"stream"`
 }
 
 type ollamaChatResponse struct {
@@ -298,6 +299,10 @@ func (s *OllamaService) buildChatRequest(messages []ollamaMessage, tools []ollam
 		req.Format = responseSchema
 	} else if cfg.StrictJSON {
 		req.Format = "json"
+	}
+
+	if cfg.KeepAlive != nil {
+		req.KeepAlive = *cfg.KeepAlive
 	}
 
 	options := make(map[string]interface{})

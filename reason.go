@@ -73,6 +73,7 @@ var (
 	WithRateLimitKey = domain.WithRateLimitKey
 	WithThink        = domain.WithThink
 	WithTimeout      = domain.WithTimeout
+	WithKeepAlive    = domain.WithKeepAlive
 )
 
 // Client wraps an LLM service and Reasoner for public use.
